@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% block content_header %}
+   
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Borrow Request Details</h2>
+
+    <p class="mt-4"><strong>Requested Item:</strong> {{ borrow_request.item }}</p>
+    <p><strong>Status:</strong> {{ borrow_request.status }}</p>
+    <p><strong>Librarian:</strong> {{ borrow_request.librarian }}</p>
+    <p><strong>Librarian:</strong> {{ borrow_request.librarian }}</p>
+
+    <a href="{% url 'form:patron_submission_status' %}" class="btn btn-secondary mt-3">Back to Requests</a>
+</div>
+{% endblock %}

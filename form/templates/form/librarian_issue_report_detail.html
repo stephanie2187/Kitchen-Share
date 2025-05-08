@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% block content_header %}
+   
+{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Issue Report Detail</h2>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button type="submit" name="update" class="btn btn-success">Update</button>
+        <button type="submit" name="delete" class="btn btn-danger">Delete</button>
+    </form>
+</div>
+{% endblock %}

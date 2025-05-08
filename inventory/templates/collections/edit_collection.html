@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+<div class="container mt-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Collection</h2>
+    <a href="{% url 'collection_list' %}" class="btn btn-outline-dark">Back to Collection List</a>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card shadow-sm mb-5">
+    <div class="card-body">
+      <h4 class="card-title mb-4">Collection Details</h4>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  {% if collection.is_private and user.groups.all.0.name == 'Librarian' %}
+    <!-- Access Management Section -->
+    <div class="card shadow-sm mb-5">
+      <div class="card-body">
+        <h4 class="card-title mb-4">Manage Access</h4>
+
+        <!-- Pending Requests -->
+        <h5 class="mb-3">Pending Requests</h5>
+        {% if access_requests %}
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>User</th>
+                  <th>Requested On</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for req in access_requests %}
+                  <tr>
+                    <td>{{ req.user.username }}</td>
+                    <td>{{ req.request_date|date:"M d, Y H:i" }}</td>
+                    <td>
+                      <a href="{% url 'handle_access_request' req.id 'approve' %}" class="btn btn-sm btn-success me-2">Approve</a>
+                      <a href="{% url 'handle_access_request' req.id 'deny' %}" class="btn btn-sm btn-danger">Deny</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No pending access requests.</p>
+        {% endif %}
+
+        <!-- Approved Users -->
+        <h5 class="mt-5 mb-3">Approved Users</h5>
+        {% if approved_users %}
+          <ul class="list-group">
+            {% for user in approved_users %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ user.username }}
+                <form method="post" action="{% url 'remove_access' collection.id user.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No approved users yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

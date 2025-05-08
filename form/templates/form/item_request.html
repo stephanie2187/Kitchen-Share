@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% block content_header %}
+   
+{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Request an Item</h2>
+    <p>Use this form to request any kind of item that is NOT currently in the Library!</p>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button type="submit" class="btn btn-primary mt-1 mb-5">Submit Request</button>
+    </form>
+</div>
+{% endblock %}

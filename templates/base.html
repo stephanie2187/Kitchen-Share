@@ -1,0 +1,450 @@
+{% load static %}
+{% load bootstrap5 %}
+{% load socialaccount %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KitchenShare{% endblock %}</title>
+    <style>
+        .hover-card {
+            transition: background-color 0.3s ease;
+        }
+        .hover-card:hover {
+            background-color: #e7e7e7;
+            cursor: pointer;
+        }
+
+        .action-bar {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+            .row > .col {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .card {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+            }
+        .card-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-body .mt-auto {
+            margin-top: auto;
+        }
+        .mt-auto form {
+            width: 100%;
+            margin: 0;
+        }
+        .mt-auto form button,
+        .mt-auto button {
+            display: block;
+            width: 100%;
+            min-height: 38px;
+            font-size: 1rem;
+            padding: 6px 12px;
+        }
+
+    </style>
+    <!-- <div style="position: relative;">
+        🛎 Notifications
+        <span id="notif-bubble" style="
+          display: none;
+          position: absolute;
+          top: -5px;
+          right: -10px;
+          background: red;
+          color: white;
+          padding: 2px 6px;
+          border-radius: 50%;
+          font-size: 12px;
+          font-weight: bold;
+        ">0</span>
+      </div> -->
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+{% block navbar %}
+    {% if user.is_authenticated %}
+        {% if user_suspension %}
+            <div class="alert alert-danger alert-dismissible fade show text-center mb-0 rounded-0" role="alert">
+                Your account has been suspended until {{ user_suspension.expires_at|date:"M d, Y" }}.
+                <a href="{% url 'moderation_suspended' %}" class="alert-link">See details</a>.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% elif role == "Patron" and not user.profile.is_verified %}
+            <div class="alert alert-warning alert-dismissible fade show text-center mb-0 rounded-0" role="alert">
+                You must be <strong>verified</strong> to request items. Please visit your
+                <a href="{% url 'profile_info' %}" class="alert-link">profile</a> to verify.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+
+        <div class="w-full bg-primary p-3 d-flex align-items-center gap-3">
+            <h2>
+                <a style="text-decoration: none; color: inherit;" class="text-white h1 m-2 mt-1" href="{% url 'home' %}">
+                    KitchenShare
+                </a>
+            </h2>
+            <h2 class="text-center ms-3 m-0 text-white">Welcome, {{ user.get_full_name }}</h2>
+            <div class="ms-auto d-flex gap-3">
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'home' %}">Home</a>
+                <div style="position: relative; display: inline-block;">
+                    <a class="btn btn-outline-light px-4 py-2" href="{% url 'inbox' %}">
+                        Messaging
+                        <span id="unread-bubble" style="
+                            display: none;
+                            position: absolute;
+                            top: -6px;
+                            right: -10px;
+                            background-color: red;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 2px 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            line-height: 1;
+                        "></span>
+                    </a>
+                </div>
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'collection_list' %}" style="position: relative">
+                    Collections
+                    {% if role == "Patron" %}
+                        <span id="access-notif" style="
+                                display: none;
+                                position: absolute;
+                                top: -6px;
+                                right: -10px;
+                                background-color: red;
+                                color: white;
+                                border-radius: 50%;
+                                padding: 2px 6px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                line-height: 1;
+                            ">
+                            0
+                        </span>
+                    {% elif role == "Librarian" %}
+                        <span id="librarian-access-notif" style="
+                            display: none;
+                            position: absolute;
+                            top: -6px;
+                            right: -10px;
+                            background-color: red;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 2px 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            line-height: 1;
+                        ">
+                            0
+                        </span>
+                    {% endif %}
+                </a>
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'profile_info' %}">Profile</a>
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'account_logout' %}">Logout</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="w-full bg-primary p-3 d-flex align-items-center gap-3">
+            <h2>
+                <a style="text-decoration: none; color: inherit;" class="text-white h1 m-2 mt-1" href="{% url 'item_list' %}">
+                    KitchenShare
+                </a>
+            </h2>
+            <div class="ms-auto d-flex gap-3">
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'item_list' %}">Home</a>
+                <a class="btn btn-outline-light px-4 py-2" href="{% url 'collection_list' %}">Collections</a>
+                <a class="btn btn-outline-light px-4 py-2" href="{% provider_login_url 'google' %}?next=/home/">Login</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% if user.is_authenticated %}
+    {% if active_warning %}
+    <div class="container mt-3">
+        <div class="alert alert-danger" role="alert">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="alert-heading mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Warning Notice
+                </h5>
+                <form method="post" action="{% url 'dismiss_warning' active_warning.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-dark">Dismiss</button>
+                </form>
+            </div>
+            <hr>
+            <p><strong>Reason:</strong> {{ active_warning.reason }}</p>
+            <p class="mb-0 small">
+                This warning was issued on {{ active_warning.created_at|date:"F j, Y" }}.
+                If you have any questions, please contact site administrators.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="ms-5">
+            {% block action_buttons %}
+            <div class="action-bar ms-auto me-3">
+                {% if role == "Librarian" %}
+                    <div style="position: relative; display: inline-block;">
+                        <a class="btn btn-primary" href="{% url 'my_borrows' %}">My Borrows</a>
+                    </div>
+                    <a class="btn btn-outline-dark" href="{% url 'add_item' %}">Add Item</a>
+                    <a class="btn btn-outline-dark" href="{% url 'form:librarian_item_requests' %}" style="position: relative;">
+                        Manage Requests
+                        <span id="librarian-borrow-notif" style="
+                            display: none;
+                            position: absolute;
+                            top: -6px;
+                            right: -10px;
+                            background-color: red;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 2px 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            line-height: 1;
+                        ">
+                        0
+                        </span>
+                    </a>
+                    <a class="btn btn-outline-dark" href="{% url 'form:librarian_issue_reports' %}">Manage Reports</a>
+                    <a class="btn btn-outline-dark" href="{% url 'user_moderation' %}">User Moderation</a>
+                    <a class="btn btn-outline-dark" href="{% url 'manage_roles' %}">Manage Roles & Ratings</a>
+                {% elif role == "Patron" %}
+                    <div style="position: relative; display: inline-block;">
+                        <a class="btn btn-primary" href="{% url 'my_borrows' %}" style="position: relative;">My Borrows
+                            <span id="borrow-notif" style="
+                                display: none;
+                                position: absolute;
+                                top: -6px;
+                                right: -10px;
+                                background-color: red;
+                                color: white;
+                                border-radius: 50%;
+                                padding: 2px 6px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                line-height: 1;
+                            ">
+                            0
+                            </span>
+                        </a>
+                    </div>
+                    <a class="btn btn-outline-dark {% if not user.profile.is_verified or user_suspension %}disabled{% endif %}"
+                       href="{% if user.profile.is_verified and not user_suspension %}{% url 'form:item_request' %}{% else %}#{% endif %}"
+                       tabindex="{% if not user.profile.is_verified or user_suspension %}-1{% endif %}"
+                       aria-disabled="{% if not user.profile.is_verified or user_suspension %}true{% endif %}">
+                        Request Item
+                    </a>
+                    <a class="btn btn-outline-dark {% if user_suspension %}disabled{% endif %}"
+                       href="{% if not user_suspension %}{% url 'form:report_issue' %}{% else %}#{% endif %}"
+                       tabindex="{% if user_suspension %}-1{% endif %}"
+                       aria-disabled="{% if user_suspension %}true{% endif %}">
+                        Report Issue
+                    </a>
+                    <a class="btn btn-outline-dark" href="{% url 'form:patron_submission_status' %}">My Submissions</a>
+                {% endif %}
+            </div>
+            {% endblock %}
+        </div>
+        {% block user_type %}
+        <div class="w-full p-4 d-flex flex-column align-items-end text-end me-3">
+            <p class="text-center mb-3">User Type: {{ role }}</p>
+            <p class="text-secondary ms-5 m-0">Email: {{ user.email }}</p>
+            <p class="text-secondary ms-5 mb-3">Username: {{ user.username }}</p>
+        </div>
+        {% endblock %}
+    </div>
+{% endif %}
+
+{% if display_dashboard and user.is_authenticated %}
+    <!-- Search / Filter -->
+    <div class="container mt-3">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control w-25" placeholder="Search by keyword" value="{{ request.GET.search }}">
+            <select name="category" class="form-select w-25">
+                <option value="">All Categories</option>
+                <option value="cookware" {% if request.GET.category == "cookware" %}selected{% endif %}>Cookware</option>
+                <option value="spices" {% if request.GET.category == "spices" %}selected{% endif %}>Spices</option>
+                <option value="other" {% if request.GET.category == "other" %}selected{% endif %}>Other</option>
+            </select>
+
+            <!-- Location filter dropdown -->
+            <select name="location" class="form-select w-25" style="max-height: 200px; overflow-y: auto;">
+                <option value="">All Locations</option>
+                {% for loc in all_locations %}
+                    <option value="{{ loc }}" {% if location_filter == loc %}selected{% endif %}>{{ loc }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="sort" class="form-select w-25">
+                <option value="latest" {% if request.GET.sort == "latest" %}selected{% endif %}>Latest Published</option>
+                <option value="earliest" {% if request.GET.sort == "earliest" %}selected{% endif %}>Earliest Published</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </form>
+    </div>
+
+    <!-- Items -->
+    <div>
+        <div>
+            {% block content_header %}
+                <p class="text-secondary ms-5">All Available Kitchen Items</p>
+            {% endblock %}
+        </div>
+        <div class="ms-4 mt-4 p-2 row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+            {% for item in items %}
+            <div class="col">
+                <a href="{% url 'item_page' item.id %}" style="text-decoration: none; color: inherit;">
+                    <div class="card w-100 h-100 hover-card">
+                        <div class="card-body d-flex flex-column">
+                            {% if item.photo %}
+                            <img src="{{ item.photo.url }}" class="card-img-top" style="height: 100px; width: 100px; object-fit: cover;">
+                            {% else %}
+                            <img src="{% static 'images/default-item.jpg' %}" class="card-img-top" style="height: 100px; width: 100px; object-fit: cover;">
+                            {% endif %}
+                            <h4 class="card-title mt-3">{{ item.title }}</h4>
+                            {% if item.location %}
+                            <p class="card-text text-secondary">{{ item.location }}</p>
+                            {% endif %}
+                            <p class="card-text text-secondary">{{ item.description }}</p>
+
+                            <div class="mt-auto">
+                                {% if item.uploader == user %}
+                                <span class="text-success fw-bold">Your Listing</span>
+                                <a href="{% url 'edit_item' item.id %}" class="btn btn-outline-dark w-100 mt-2">Edit Item</a>
+
+                                {% elif item.borrow_status == "approved" %}
+                                <button class="btn btn-success w-100" disabled>Accepted</button>
+
+                                {% elif item.borrow_status == "denied" %}
+                                <form method="post" action="{% url 'request_borrow' item.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-warning w-100">Request Again</button>
+                                </form>
+
+                                {% elif item.borrow_status == "returned" %}
+                                <form method="post" action="{% url 'request_borrow' item.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-primary w-100">Request Again</button>
+                                </form>
+
+                                {% elif item.borrow_status %}
+                                <button class="btn btn-secondary w-100" disabled>Requested!</button>
+
+                                {% elif not user.profile.is_verified or user_suspension %}
+                                <button class="btn btn-secondary w-100" disabled>Request</button>
+
+                                {% else %}
+                                <form method="post" action="{% url 'request_borrow' item.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-primary w-100">Request</button>
+                                </form>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+                <p class="text-center text-muted">No items found.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<div class="container-fluid flex-grow-1 mt-3">
+    {% block content %}{% endblock %}
+</div>
+
+<footer class="text-center mt-auto py-3" style="background-color: #f8f9fa; border-top: 1px solid #ddd;">
+    <small>
+        This system is a class project and is not monitored. Please do not submit real personal
+        or confidential information.
+        For more details, please visit the
+        <a href="https://s25.cs3240.org/project.html" target="_blank" rel="noopener">project guidelines</a>.
+    </small>
+</footer>
+</body>
+</html>
+
+<script>
+    function updateUnreadCount() {
+        fetch("{% url 'unread_message_count_api' %}")
+            .then(response => response.json())
+            .then(data => {
+                const bubble = document.getElementById('unread-bubble');
+                if (bubble) {
+                    if (data.unread_count > 0) {
+                        bubble.innerText = data.unread_count;
+                        bubble.style.display = 'inline-block';
+                    } else {
+                        bubble.style.display = 'none';
+                    }
+                }
+            });
+    }
+    
+    setInterval(updateUnreadCount, 10000);
+    
+    updateUnreadCount();
+
+    function updateNotificationCount() {
+        fetch("{% url 'unread_notifications' %}")
+            .then(response => response.json())
+            .then(data => {
+                const borrowBubble = document.getElementById("borrow-notif");
+                const accessBubble = document.getElementById("access-notif");
+                const librarianBorrowBubble = document.getElementById("librarian-borrow-notif");
+                const librarianAccessBubble = document.getElementById("librarian-access-notif");
+
+                const borrowCount = data.borrow_unread || 0;
+                const accessCount = data.access_unread || 0;
+                const librarianBorrowCount = data.librarian_borrow_unread || 0;
+                const librarianAccessCount = data.librarian_access_unread || 0;
+
+                if (borrowBubble) {
+                    borrowBubble.innerText = borrowCount;
+                    borrowBubble.style.display = borrowCount > 0 ? "inline-block" : "none";
+                }
+                if (accessBubble) {
+                    accessBubble.innerText = accessCount;
+                    accessBubble.style.display = accessCount > 0 ? "inline-block" : "none";
+                }
+                if (librarianBorrowBubble) {
+                    librarianBorrowBubble.innerText = librarianBorrowCount;
+                    librarianBorrowBubble.style.display = librarianBorrowCount > 0 ? "inline-block" : "none";
+                }
+                if (librarianAccessBubble) {
+                    librarianAccessBubble.innerText = librarianAccessCount;
+                    librarianAccessBubble.style.display = librarianAccessCount > 0 ? "inline-block" : "none";
+                }
+        });
+    }
+    updateNotificationCount();
+    setInterval(updateNotificationCount, 10000);
+</script>
+</body>
+</html>

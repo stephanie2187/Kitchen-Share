@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Remove Moderation</h2>
+    
+    <div class="card mt-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0">Confirm Moderation Removal</h5>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to remove the following moderation action?</p>
+            
+            <div class="alert alert-info">
+                <p><strong>User:</strong> {{ user_profile.username }}</p>
+                <p><strong>Action:</strong> {{ moderation.get_type_display }}</p>
+                <p><strong>Applied on:</strong> {{ moderation.created_at|date:"M d, Y H:i" }}</p>
+                <p><strong>Reason:</strong> {{ moderation.reason }}</p>
+                <p><strong>Applied by:</strong> {{ moderation.created_by.username }}</p>
+                {% if moderation.expires_at %}
+                <p><strong>Expires on:</strong> {{ moderation.expires_at|date:"M d, Y H:i" }}</p>
+                {% endif %}
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="removal_reason" class="form-label">Reason for removal (optional):</label>
+                    <textarea class="form-control" id="removal_reason" name="removal_reason" rows="3"></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'user_detail' user_profile.id %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Remove Moderation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

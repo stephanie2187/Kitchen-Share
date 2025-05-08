@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% block content %}
+<div class="container">
+  <h2 class="mt-4">Manage Item Requests</h2>
+  <ul class="list-group mt-4">
+    {% for req in requests %}
+    <li class="list-group-item mb-3 rounded border">
+      <div class="row g-3 align-items-center">
+
+        <!-- Left: Type & Item -->
+        <div class="col-md-4">
+          <p class="mb-1"><strong>Request Type:</strong> {{ req.request_type }}</p>
+          <p class="mb-1"><strong>Item:</strong>
+            {% if req.request_type == 'ItemRequest' %}
+              {{ req.item_name }}
+            {% else %}
+              {{ req.item.title }}
+            {% endif %}
+          </p>
+        </div>
+
+        <!-- Middle: Status & Ratings -->
+        <div class="col-md-5">
+          <p class="mb-1"><strong>Status:</strong> {{ req.get_status_display }}</p>
+
+          <!-- Patron Rating -->
+          {% if req.num_ratings > 0 %}
+            <p class="mb-1"><strong>Patron Rating:</strong>
+              {{ req.num_ratings }} rating{{ req.num_ratings|pluralize }} –
+              {{ req.patron_rating|floatformat:1 }}/5
+            </p>
+          {% else %}
+            <p class="mb-1 text-muted"><strong>Patron Rating:</strong> No ratings yet</p>
+          {% endif %}
+
+          <!-- Item Rating -->
+          {% if req.item_num_ratings > 0 %}
+            <p class="mb-1"><strong>Item Rating:</strong>
+              {{ req.item_num_ratings }} rating{{ req.item_num_ratings|pluralize }} –
+              {{ req.item_rating|floatformat:1 }}/5
+            </p>
+          {% else %}
+            <p class="mb-1 text-muted"><strong>Item Rating:</strong> No ratings yet</p>
+          {% endif %}
+        </div>
+
+        <!-- Right: Actions -->
+        <div class="col-md-3 text-end">
+          {% if req.status != 'Denied' and req.status != 'Approved' %}
+            {% if req.request_type == 'ItemRequest' %}
+              <a href="{% url 'form:librarian_item_request_detail' pk=req.pk %}"
+                 class="btn btn-sm btn-outline-secondary">
+                 View/Edit
+              </a>
+            {% else %}
+              <a href="{% url 'form:librarian_borrow_request_detail' pk=req.pk %}"
+                 class="btn btn-sm btn-outline-secondary">
+                 View/Edit
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+
+      </div>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No item requests.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

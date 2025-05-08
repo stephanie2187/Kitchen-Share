@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">Account Suspended</h3>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Your account has been temporarily suspended</h5>
+            
+            <p class="card-text">
+                Your account has been suspended until 
+                <strong>{{ moderation.expires_at|date:"F j, Y, g:i a" }}</strong>
+            </p>
+            
+            <p class="card-text"><strong>Reason:</strong> {{ moderation.reason }}</p>
+            
+            <p class="card-text">
+                During this suspension period, you can still browse the site, but you cannot:
+                <ul>
+                    <li>Request or borrow items</li>
+                    <li>Submit forms or reports</li>
+                    <li>Interact with other users</li>
+                </ul>
+            </p>
+            
+            <p class="card-text">If you believe this is a mistake, please contact the administrators.</p>
+            
+            <a href="{% url 'home' %}" class="btn btn-secondary">Return to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>User Moderation: {{ user_profile.username }}</h2>
+
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">User Information</h5>
+            <span class="badge {% if user_role == 'Librarian' %}bg-info{% elif user_role == 'Patron' %}bg-secondary{% elif user_role == 'Admin' %}bg-dark{% endif %} fs-6">
+                {{ user_role }}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Username:</strong> {{ user_profile.username }}</p>
+                    <p><strong>Full Name:</strong> {{ user_profile.get_full_name|default:"Not provided" }}</p>
+                    <p><strong>Email:</strong> {{ user_profile.email }}</p>
+                    <p><strong>Member Since:</strong> {{ user_profile.date_joined|date:"M d, Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <strong>Current Status:</strong> 
+                        {% if active_moderation %}
+                            <span class="badge {% if active_moderation.type == 'warning' %}bg-warning text-dark{% elif active_moderation.type == 'suspension' %}bg-danger{% else %}bg-black{% endif %}">
+                                {{ active_moderation.get_type_display }}
+                            </span>
+                            {% if active_moderation.expires_at %}
+                                <span class="ms-1">(until {{ active_moderation.expires_at|date:"M d, Y" }})</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </p>
+
+                    <div class="card mt-2">
+                        <div class="card-header">User Rating</div>
+                        <div class="card-body">
+                            {% if user_ratings.count > 0 %}
+                                <p class="mb-0">
+                                    ⭐ {{ user_ratings.average|floatformat:1 }}/5 from {{ user_ratings.count }} rating{{ user_ratings.count|pluralize }}
+                                </p>
+                            {% else %}
+                                <p class="text-muted mb-0">No ratings yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user_role == 'Admin' and not is_superuser %}
+    <div class="alert alert-warning mt-4">
+        <h5>Notice: Cannot Moderate Administrator</h5>
+        <p>As a librarian, you cannot moderate administrators. This restriction is in place to maintain the administrative hierarchy.</p>
+    </div>
+    {% elif not can_moderate %}
+    <div class="alert alert-warning mt-4">
+        <h5>Notice: Cannot Moderate User</h5>
+        <p>As a librarian, you cannot moderate other librarians. Only administrators can moderate librarians.</p>
+    </div>
+    {% endif %}
+
+    {% if can_moderate %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Moderate User</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit" class="btn btn-warning">Apply Moderation</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Moderation History</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                        <th>Reason</th>
+                        <th>By</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for moderation in moderation_history %}
+                    <tr>
+                        <td>{{ moderation.created_at|date:"M d, Y H:i" }}</td>
+                        <td>{{ moderation.get_type_display }}</td>
+                        <td>{{ moderation.reason }}</td>
+                        <td>{{ moderation.created_by.username }}</td>
+                        <td>
+                            {% if moderation.is_active %}
+                                <span class="badge bg-danger">Active</span>
+                                {% if moderation.expires_at %}
+                                    <br>Expires: {{ moderation.expires_at|date:"M d, Y" }}
+                                {% endif %}
+                            {% elif moderation.removed_at %}
+                                <span class="badge bg-info">Removed</span>
+                                <br>{{ moderation.removed_at|date:"M d, Y" }}
+                                <br>By: {{ moderation.removed_by.username }}
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if can_moderate and not moderation.removed_at %}
+                                <a href="{% url 'remove_moderation' moderation.id %}" class="btn btn-sm btn-warning">
+                                    Remove
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No moderation history found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Item Requests</h5>
+                    <span class="badge bg-primary">{{ item_requests.count }}</span>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in item_requests %}
+                            <tr>
+                                <td>{{ request.submitted_at|date:"M d, Y" }}</td>
+                                <td>{{ request.item_name }}</td>
+                                <td>{{ request.status }}</td>
+                                <td>
+                                    <a href="{% url 'form:librarian_item_request_detail' request.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No item requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Borrow Requests</h5>
+                    <span class="badge bg-primary">{{ borrow_requests.count }}</span>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrow in borrow_requests %}
+                            <tr>
+                                <td>{{ borrow.request_date|date:"M d, Y" }}</td>
+                                <td>{{ borrow.item.title }}</td>
+                                <td>{{ borrow.status }}</td>
+                                <td>
+                                    <a href="{% url 'form:librarian_borrow_request_detail' borrow.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No borrow requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Issue Reports</h5>
+            <span class="badge bg-primary">{{ issue_reports.count }}</span>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in issue_reports %}
+                    <tr>
+                        <td>{{ report.submitted_at|date:"M d, Y" }}</td>
+                        <td>{{ report.title }}</td>
+                        <td>{{ report.status }}</td>
+                        <td>
+                            <a href="{% url 'form:librarian_issue_report_detail' report.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No issue reports found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3 mb-4">
+        <a href="{% url 'user_moderation' %}" class="btn btn-secondary">Back to User List</a>
+    </div>
+</div>
+{% endblock %}

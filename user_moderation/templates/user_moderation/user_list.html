@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>User Moderation Dashboard</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Search and Filter Users</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    {% bootstrap_field form.search_query %}
+                </div>
+                <div class="col-md-3">
+                    {% bootstrap_field form.role_filter %}
+                </div>
+                <div class="col-md-3">
+                    {% bootstrap_field form.status_filter %}
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a href="{% url 'user_moderation' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>User List</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Activity</th>
+                            <th>Rating</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.get_full_name|default:"Not provided" }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge {% if user.role == 'Librarian' %}bg-info{% elif user.role == 'Patron' %}bg-secondary{% elif user.role == 'Admin' %}bg-dark{% endif %}">
+                                    {{ user.role }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.active_moderation %}
+                                    <span class="badge {% if user.active_moderation.type == 'warning' %}bg-warning text-dark{% elif user.active_moderation.type == 'suspension' %}bg-danger{% else %}bg-black{% endif %}">
+                                        {{ user.active_moderation.get_type_display }}
+                                        {% if user.active_moderation.expires_at %}
+                                            (until {{ user.active_moderation.expires_at|date:"M d, Y" }})
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    Borrows: {{ user.borrow_count }} |
+                                    Requests: {{ user.request_count }} |
+                                    Reports: {{ user.report_count }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if user.rating_count > 0 %}
+                                  {{ user.rating_avg|floatformat:1 }}/5 ({{ user.rating_count }} rating{{ user.rating_count|pluralize }})
+                                {% else %}
+                                  <span class="text-muted">No ratings</span>
+                                {% endif %}
+                              </td>
+                            <td>
+                                {% if user.role == 'Admin' and not is_superuser %}
+                                    <button class="btn btn-sm btn-primary" disabled title="Cannot moderate administrators">View Details</button>
+                                {% else %}
+                                    <a href="{% url 'user_detail' user.id %}" class="btn btn-sm btn-primary">View Details</a>
+
+                                    {% if is_superuser or user.role != 'Librarian' and user.role != 'Admin' %}
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'user_detail' user.id %}">Moderate User</a></li>
+                                            {% if user.email %}<li><a class="dropdown-item" href="mailto:{{ user.email }}">Email User</a></li>{% endif %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No users found matching your criteria.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

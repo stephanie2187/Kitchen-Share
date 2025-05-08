@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Send a Message</h2>
+        <div>
+            <a class="btn btn-outline-primary mx-1" href="{% url 'inbox' %}">Inbox</a>
+            <a class="btn btn-outline-primary mx-1" href="{% url 'sent_messages' %}">Sent</a>
+            <a class="btn btn-outline-primary mx-1" href="{% url 'send_message' %}">New Message</a>
+        </div>
+    </div>
+    <div class="card p-4 shadow-sm">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Send</button>
+        </form>
+    </div>
+{% endblock %}

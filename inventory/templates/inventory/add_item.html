@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Add Item Form</title>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <div class="d-flex justify-content-between mb-4">
+                <h2 class="text-primary mb-5">Add a New Kitchenware Item</h2>
+            </div>
+            <div class="card p-5">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group mb-4 text-center">
+                        <label for="{{ field.id_for_label }}" class="form-label d-block"><strong>{{ field.label }}</strong></label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary ms-2 mt-5 mb-5" type="submit">Submit</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
+{% endblock %}

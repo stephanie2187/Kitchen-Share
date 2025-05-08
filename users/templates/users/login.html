@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load user_tags %}
+{% load socialaccount %}
+
+{% block title %}Login - KitchenShare{% endblock %}
+
+{% block navbar %}
+<!-- No navbar for the login page -->
+{% endblock %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+
+{% block content %}
+    <h2 class="text-center mt-5 p-5">Google Login</h2>
+    <div class="text-center mt-3 background-light">
+        <a href="{% provider_login_url 'google' %}?next=/home/" class="btn btn-primary">Login with Google</a>
+        <br><br>
+        <a href="{% url 'item_list' %}" class="btn btn-secondary">Browse Items</a>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 mt-3">
+                    {% if request.GET.error == "role_conflict" %}
+                        <div class="alert alert-danger" role="alert">
+                            This account is registered with a different role. Please contact an administrator.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        if (window.location.search.indexOf('error=') !== -1) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    </script>
+{% endblock %}

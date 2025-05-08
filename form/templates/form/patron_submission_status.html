@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% load tz %}
+{% block content_header %}
+   
+{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Your Submissions</h2>
+
+    <div class="mt-3">
+        <h4>Item Requests</h4>
+        <ul class="list-group">
+            {% for req in item_requests %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    {% if req.item_name %}
+                        {{ req.item_name }}
+                    {% else %}
+                        {{ req.item.title }}
+                    {% endif %}
+                </span>
+                <p><strong>Status:</strong> {{ req.get_status_display }}</p>
+                {% if req.get_status_display != 'Denied' and req.get_status_display != 'Approved' and req.get_status_display != 'Accepted' %}
+                    <a href="{% url 'form:patron_item_request_detail' pk=req.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+                {% endif %}
+            </li>
+            {% empty %}
+            <li class="list-group-item">No item requests submitted.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mt-5">
+        <h4>Borrow Requests</h4>
+        <ul class="list-group">
+            {% for req in borrow_requests %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    {{ req.item.title }} 
+                    
+                </span>
+                <p><strong>Status:</strong> {{ req.get_status_display }}</p>
+                {% if req.get_status_display != 'Denied' and req.get_status_display != 'Approved' %}
+                    <a href="{% url 'item_page' item_id=req.item.id %}" class="btn btn-sm btn-outline-secondary">View Item</a>
+
+                {% endif %}
+            </li>
+            {% empty %}
+            <li class="list-group-item">No borrow requests submitted.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mt-5">
+        <h4>Issue Reports</h4>
+        <ul class="list-group">
+            {% for report in issue_reports %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    {{ report.title }} - {{ report.status }} 
+                    <small>Submitted: {{ report.submitted_at|localtime|date:"M d, Y h:i A" }}</small>
+                </span>
+                <a href="{% url 'form:patron_issue_report_detail' report.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+            </li>
+            {% empty %}
+            <li class="list-group-item">No issue reports submitted.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

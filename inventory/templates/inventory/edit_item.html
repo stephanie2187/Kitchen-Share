@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<div class="container mt-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Item</h2>
+    <a href="{% url 'home' %}" class="btn btn-outline-dark">Back to Home</a>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card shadow-sm mb-5">
+    <div class="card-body">
+      <h4 class="card-title mb-4">Item Details</h4>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  {% if borrow_history %}
+  <!-- Borrow History Section -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="card-title mb-4">Borrow History</h4>
+      <ul class="list-group">
+        {% for borrow in borrow_history %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ borrow.patron.username }}</strong> — Returned on {{ borrow.return_date|date:"M d, Y" }}
+              {% if borrow.patron_rating %}
+                <span class="text-muted ms-2">Rated {{ borrow.patron_rating.rating }}★</span>
+              {% endif %}
+            </div>
+            {% if not borrow.patron_rating %}
+              <form method="post" action="{% url 'rate_patron' borrow.patron.id %}" class="d-flex align-items-center">
+                {% csrf_token %}
+                <select name="rating" class="form-select form-select-sm me-2" required>
+                  {% for i in "12345" %}
+                    <option value="{{ i }}">{{ i }}★</option>
+                  {% endfor %}
+                </select>
+                <input type="text" name="feedback" class="form-control form-control-sm me-2" placeholder="Feedback (optional)">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Rate</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

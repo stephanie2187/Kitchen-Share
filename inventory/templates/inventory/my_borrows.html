@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-4 mt-2">My Borrowed Items</h2>
+    </div>
+
+{% if notices %}
+<div class="alert alert-warning">
+    <h5>Notices:</h5>
+    <ul class="mb-0">
+        {% for notice in notices %}
+        <li>
+            {{ notice.item.title }}
+            {% if notice.overdue %}
+                is overdue
+            {% elif notice.due_today %}
+                is due today
+            {% elif notice.due_in_24_hours %}
+                is due in 24 hours
+            {% elif notice.due_in_48_hours %}
+                is due in 48 hours
+            {% endif %}
+            ({{ notice.due_date }})
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+    <h4>Currently Borrowed</h4>
+    {% if borrows %}
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Item</th>
+                        <th>Description</th>
+                        <th>Approved By</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Overdue?</th>
+                        <th>Returned?</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrow in borrows %}
+                        
+                        <tr {% if borrow.is_overdue %}class="table-danger"{% endif %}>
+                            <td>
+                                {% if borrow.item_name %}
+                                    {{ borrow.item_name }}  
+                                {% else %}
+                                    {{ borrow.item.title }} 
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if borrow.description %}
+                                    {{ borrow.description|truncatechars:100 }}  
+                                {% else %}
+                                    {{ borrow.item.description|truncatechars:100 }}  
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if borrow.librarian %}
+                                    {{ borrow.librarian.username }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge-success text-success">
+                                    {{ borrow.status|capfirst }}
+                                </span>
+                            </td> 
+                            <td>
+                                {% if borrow.due_date %}
+                                    {{ borrow.due_date }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if borrow.is_overdue %}
+                                <span class="text-danger font-weight-bold">Yes</span>
+                                {% else %}
+                                No
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'return_item' borrow.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-warning">Return</button>
+                                </form>
+                            </td>     
+                           
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+        </div>
+    
+    {% endif %}
+
+    <h4 class="mt-5">Borrow History</h4>
+        {% if borrow_history %}
+        <table class="table table-hover table-bordered mt-4">
+            <thead class="thead-light">
+                <tr>
+                    <th>Item</th>
+                    <th>Description</th>
+                    <th>Approved By</th>
+                    <th>Status</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for borrow in borrow_history %}
+                <tr {% if borrow.was_late_return %}class="table-danger"{% endif %}>
+                    <td>
+                        {% if borrow.item_name %}
+                            {{ borrow.item_name }}  
+                        {% else %}
+                            {{ borrow.item.title }} 
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if borrow.description %}
+                            {{ borrow.description|truncatechars:100 }}  
+                        {% else %}
+                            {{ borrow.item.description|truncatechars:100 }}  
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if borrow.librarian %}
+                            {{ borrow.librarian.username }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if borrow.returned %}
+                          {% if borrow.was_late_return %}
+                            <span class="text-red-600 font-bold">Returned Late</span>
+                          {% else %}
+                            Returned On Time
+                          {% endif %}
+                        {% else %}
+                          Not Returned
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No returned items yet.</p>
+        {% endif %}
+
+</div>
+{% endblock %}

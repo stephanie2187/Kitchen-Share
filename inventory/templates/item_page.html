@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block content %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+    <h1>{{ item.title }}</h1>
+    {% if item.photo %}
+        <img src="{{ item.photo.url }}" class="img-fluid mb-3" style="height: 300px; object-fit: cover;">
+    {% else %}
+        <img src="{% static 'images/default-item.jpg' %}" class="img-fluid mb-3" style="height: 300px; object-fit: cover;">
+    {% endif %}
+
+    <p><strong>Identifier:</strong> {{ item.primary_identifier }}</p>
+    <p><strong>Description:</strong> {{ item.description }}</p>
+    <p><strong>Category:</strong> {{ item.category }}</p>
+    <p><strong>Condition:</strong> {{ item.get_condition_display }}</p>
+    <p><strong>Location:</strong> {{ item.location }}</p>
+    <p><strong>Status:</strong> {{ item.display_status }}</p>
+    <p><strong>Average Rating:</strong> {{ item.average_rating|floatformat:2 }} / 5</p>
+    <!-- Collections Display Section -->
+    <div class="mb-4">
+        <h4 class="mb-2">Part of Collections:</h4>
+        {% if item.collection_set.all %}
+            <div class="d-flex flex-wrap gap-2">
+                {% for collection in item.collection_set.all %}
+                    <span class="badge bg-secondary p-2">{{ collection.title }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">This item is not part of any collection.</p>
+        {% endif %}
+    </div>
+
+    <h3>Ratings</h3>
+    {% for rating in item.ratings.all %}
+        <p>{{ rating.user.username }}:</p>
+        <div class="stars mb-2">
+            {% for i in "12345" %}
+                {% if forloop.counter <= rating.rating %}
+                    <span>&#9733;</span>
+                {% else %}
+                    <span>&#9734;</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% empty %}
+        <p>No ratings yet.</p>
+    {% endfor %}
+
+    {% if user.is_authenticated %}
+    <h4>Rate this item:</h4>
+    <form method="post" action="{% url 'add_rating' item.id %}">
+        {% csrf_token %}
+        <select name="rating" required class="form-select w-auto d-inline">
+            <option value="1">1 Star</option>
+            <option value="2">2 Stars</option>
+            <option value="3">3 Stars</option>
+            <option value="4">4 Stars</option>
+            <option value="5">5 Stars</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Submit Rating</button>
+    </form>
+    {% endif %}
+
+    <h3>Comments</h3>
+    {% for comment in item.comments.all %}
+    <p><strong>{{ comment.user.username }}:</strong> {{ comment.content }} <small>{{ comment.created_at }}</small></p>
+    {% empty %}
+    <p>No comments yet.</p>
+    {% endfor %}
+
+    {% if user.is_authenticated %}
+    <h4>Leave a Comment:</h4>
+    <form method="post" action="{% url 'add_comment' item.id %}">
+        {% csrf_token %}
+        <textarea name="comment" rows="4" class="form-control" required></textarea>
+        <button type="submit" class="btn btn-primary mt-3">Submit Comment</button>
+    </form>
+    {% endif %}
+
+</div>
+
+<div class="container mt-4">
+
+    <!-- Delete button and modal -->
+    {% if role == "Librarian" %}
+        <div class="mt-5">
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                Delete Item
+            </button>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete "{{ item.title }}"? This action is irreversible.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="post" action="{% url 'delete_item' item.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

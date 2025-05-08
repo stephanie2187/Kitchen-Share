@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Account Banned</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-slash-circle-fill text-dark" style="font-size: 3rem;"></i>
+                    </div>
+                    
+                    <h5 class="card-title">Your account has been banned</h5>
+                    
+                    <p class="card-text">
+                        <strong>Reason:</strong> {{ moderation.reason }}
+                    </p>
+                    
+                    <p class="card-text">
+                        Your access to the platform has been revoked. This decision is permanent.
+                    </p>
+                    
+                    <p class="card-text">
+                        If you believe this is an error or wish to appeal this decision, please contact the site administrators by email.
+                    </p>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'account_logout' %}" class="btn btn-danger">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

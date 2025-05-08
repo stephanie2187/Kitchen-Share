@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block user_type %}
+<!-- No user type on this page -->
+{% endblock %}
+{% block action_buttons %}
+<!-- No action buttons on this page -->
+{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-5 mt-5 ms-5">All Collections</h2>
+    <form method="get" class="d-flex mb-5 mt-5 ms-5" style="width: 500px; flex-shrink: 0;">
+      <input type="text" name="search" value="{{ search_query }}" 
+             class="form-control me-2" 
+             placeholder="Search collections or items...">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    {% if user.is_authenticated %}
+      <a href="{% url 'create_collection' %}" class="btn btn-outline-primary me-2">Create Collection</a>
+    {% endif %}
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 g-4 ms-4">
+    {% for entry in collections %}
+      {% with collection=entry.collection has_access=entry.has_access has_requested=entry.has_requested %}
+
+        {% if not collection.is_private or user.is_authenticated %}
+
+          <div class="col">
+            <div class="card me-2 h-100 shadow-sm">
+              <div class="card-body">
+
+                <h5 class="card-title mb-1"><strong>{{ collection.title }}</strong></h5>
+                <small class="text-muted">
+                  {% if collection.is_private %}(Private){% else %}(Public){% endif %}
+                  &nbsp;Created by: {{ collection.created_by.username }}
+                </small>
+
+                <div class="d-flex align-items-center flex-wrap mb-2">
+
+                  <button onclick="toggleSearch('{{ collection.id }}')" class="btn btn-sm btn-outline-primary me-2">
+                    Search for items
+                  </button>
+                
+                  <div id="search-container-{{ collection.id }}" style="display: none;" class="me-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Search items..." 
+                           oninput="filterItems('{{ collection.id }}', this.value)" style="width: 200px;">
+                  </div>
+                
+                  {% if user == collection.created_by or user.groups.all.0.name == 'Librarian' %}
+                    <a href="{% url 'edit_collection' collection.id %}" class="btn btn-sm btn-outline-secondary me-2">
+                      Edit
+                    </a>
+                
+                    <form method="post" action="{% url 'delete_collection' collection.id %}" class="d-inline-block me-2" style="margin-bottom: 0;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                        Delete
+                      </button>
+                    </form>
+                  {% endif %}
+                
+                </div>
+
+                {% if not collection.is_private or has_access %}
+                  <p class="card-text mt-4">
+                    <strong>Description:</strong>
+                    {{ collection.description|default:"No description." }}
+                  </p>
+                  <h6 class="mt-2"><strong>Items in this Collection:</strong></h6>
+                  <ul class="list-group list-group-flush mb-3" id="item-list-{{ collection.id }}"">
+                    {% for item in collection.items.all %}
+                      <li class="list-group-item">
+                        <a href="{% url 'item_page' item.id %}">{{ item.title }}</a>
+                      </li>
+                    {% empty %}
+                      <li class="list-group-item text-muted">No items in this collection</li>
+                    {% endfor %}
+                  </ul>
+
+                {% else %}
+                  <p class="text-muted mt-4">
+                    <em>This collection is private. Request access to see details.</em>
+                  </p>
+                  {% if user.is_authenticated %}
+                    {% if not has_requested %}
+                      <form method="post" action="{% url 'request_collection_access' collection.id %}" class="mt-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary">Request Access</button>
+                      </form>
+                    {% else %}
+                      <small class="text-muted d-block mt-2">Access request sent.</small>
+                    {% endif %}
+                  {% else %}
+                    <p class="text-muted mt-2"><em>Login to request access.</em></p>
+                  {% endif %}
+                {% endif %}
+
+              </div>
+            </div>
+          </div>
+
+        {% endif %}
+      {% endwith %}
+    {% empty %}
+      <div class="alert alert-warning text-center w-1/3 mt-5 me-4 ms-5">
+        No collections available.
+      </div>
+    {% endfor %}
+  </div>
+
+<script>
+  function toggleSearch(collectionId) {
+    const searchBar = document.getElementById("search-container-" + collectionId);
+    searchBar.style.display = (searchBar.style.display === "none") ? "block" : "none";
+  }
+
+  function filterItems(collectionId, query) {
+    query = query.toLowerCase();
+    const list = document.getElementById("item-list-" + collectionId);
+    const items = list.getElementsByTagName("li");
+
+    for (let i = 0; i < items.length; i++) {
+      const itemText = items[i].textContent.toLowerCase();
+      // console.log("ITEM:" + itemText);
+      items[i].style.display = itemText.includes(query) ? "block" : "none";
+    }
+  }
+</script>
+{% endblock %}
